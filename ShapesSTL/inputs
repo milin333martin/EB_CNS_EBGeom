@@ -1,0 +1,222 @@
+amrex.fpe_trap_invalid=0
+
+max_step  = 4000 #1000000
+stop_time = 1.e-3
+
+geometry.is_periodic = 0 0 0
+geometry.coord_sys   = 0  # 0 => cart, 1 => RZ  2=>spherical
+geometry.prob_lo     =   0.0    0.0     0.0
+geometry.prob_hi     =   0.2   0.02   0.02
+amr.n_cell           =   320   32      32
+#amr.n_cell           =   2560   128      128
+
+# >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
+# 0 = Interior           3 = Symmetry
+# 1 = Inflow             4 = SlipWall
+# 2 = Outflow            5 = NoSlipWall
+# >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
+cns.lo_bc       =  4   5   5
+cns.hi_bc       =  2   5   5
+
+cns.cfl = 0.2  # cfl number for hyperbolic system
+
+cns.v = 1
+amr.v = 1
+amr.subcycling_mode = Auto
+cns.do_reflux = 1
+
+# FCT parameters
+cns.minro = -1.0e-12
+cns.minp  = 101.325
+cns.maxro = 30.0
+cns.maxp  = 30265000.0
+cns.diff1 = 0.985
+cns.diffcc = 0.985
+cns.vfc_threshold = 1.e-3
+eb2.small_volfrac   = 1.e-4
+
+# SOOTFOIL START TIME
+cns.start_sfoil_time	 = 0
+
+# LOAD BALANCE
+amr.loadbalance_with_workestimates = 1
+amr.loadbalance_level0_int = 1000
+
+# REFINEMENT / REGRIDDING
+cns.tag_probspecific  = 1 
+amr.max_level         = 7     # maximum level number allowed
+cns.refine_max_dengrad_lev = 2
+amr.ref_ratio         = 2 2 2 2 2 2 2 2 2 2 # refinement ratio
+amr.regrid_int        = 2 2 2 2 2 2 2 2 2 2 # how often to regrid
+amr.blocking_factor_x = 16 #32
+amr.blocking_factor_y = 16
+amr.blocking_factor_z = 16
+
+amr.max_grid_size_x = 64
+amr.max_grid_size_y = 32
+amr.max_grid_size_z = 32
+
+amr.n_error_buf_x     = 0 # number of buffer cells in error est
+amr.n_error_buf_y     = 0
+amr.n_error_buf_z     = 0
+amr.grid_eff          = 0.98     # what constitutes an efficient grid
+amr.refine_grid_layout = true
+amr.regrid_on_restart  = 1
+amr.compute_new_dt_on_regrid = 1
+
+# CHECKPOINT FILES
+amr.checkpoint_files_output = 1
+amr.check_file              = Outputs/Check/chk   # root name of checkpoint file
+amr.check_int               = 500    # number of timesteps between checkpoints
+#amr.restart				= Outputs/Check/chk00000300
+
+# PLOTFILES
+amr.plot_files_output 		= 1
+amr.file_name_digits  		= 8
+amr.plot_file         		= Outputs/Plot/plt     # root name of plotfile
+amr.plot_int          		= 100     # number of timesteps between plotfiles
+amr.derive_plot_vars  		= pressure x_velocity y_velocity schlieren
+
+# EB
+#-------------PROBLEM DEFINTION FOR DETONATION QUENCHING TESTS------------------------------
+#eb2.geom_type = all_regular
+
+#eb2.geom_type = stl
+eb2.stl_file = 20cmTube.stl # CylinderTube.stl #
+eb2.stl_scale = 1  # Adjust as needed
+eb2.stl_center = 0.00 0.05 0.05  # Adjust to your desired center
+eb2.stl_reverse_normal = 0  # Set to 1 if you need to reverse the normals
+eb2.cover_multiple_cuts = 1
+eb2.num_coarsen_opt = 1
+
+#eb2.geom_type = cylindrical_pipe
+#cylindrical_pipe.Outer_radius = 0.013
+#cylindrical_pipe.Inner_radius = 0.011
+#cylindrical_pipe.length = 0.1000000001
+#cylindrical_pipe.Center = 0.375 0.015 0.015
+#cylindrical_pipe.axis_dir = 0
+
+#eb2.geom_type = user_defined
+hollow_pipe.Outer_radius = 0.025
+hollow_pipe.Inner_radius = 0.0112
+hollow_pipe.length = 0.2 #0.75
+hollow_pipe.Center = 0.05 0.05 0.1 #0.375 0.05 0.1
+hollow_pipe.axis_dir = 0
+
+eb2.geom_type = user_defined
+eb2.cover_multiple_cuts = 1
+eb2.use_bvh = false
+eb2.n_cell = 64
+eb2.max_grid_size = 16
+eb2.which_geom = 0
+eb2.num_coarsen_opt = 0
+
+# FULLY REFINE THE NARROWEST CHANNELS UPTO HIGHEST AMR LEVEL
+cns.refine_box_lo_0 = 0.0   0.037	0.087
+cns.refine_box_hi_0 = 0.2   0.063	0.113
+ 
+cns.refine_box_lo_1 = 1.9   0.01089 -1e-3
+cns.refine_box_hi_1 = 2.1   0.01129 -1e-3
+ 
+cns.refine_box_lo_2 = 1.9   0.0218 -1e-3
+cns.refine_box_hi_2 = 2.1   0.0221 -1e-3
+ 
+cns.refine_box_lo_3 = 1.9   39.64e-3 -1e-3
+cns.refine_box_hi_3 = 2.1 40.04e-3 -1e-3
+
+cns.refine_box_lo_4 = 1.9   49.8e-3 -1e-3
+cns.refine_box_hi_4 = 2.1 51.0e-3 -1e-3
+
+# REFINE ALONG ENTRY AND EXIT SECTION OF ARRESTOR
+cns.refine_box_lo_5 = 0.18   0.035 0.085
+cns.refine_box_hi_5 = 0.21   0.065 0.115
+
+cns.refine_box_lo_6 = 1.9   0.009 0.009
+cns.refine_box_hi_6 = 1.99   0.021 0.021
+
+#-----------------------------------------------------------------------------------------
+
+cns.refine_cutcells = 1
+
+# eb_algorithm : 1 for FCT, 2 for PLM
+cns.eb_algorithm = 1 
+cns.plm_iorder   = 2
+cns.eb_weights_type = 3
+cns.do_visc = true
+
+# DOES THE EB HAVE WALL LOSSES
+cns.eb_wallloss   = false
+# THERMAL CONDUCTIVITY OF THE SOLID EB WALL MATERIAL
+cns.ksolid        = 16.2 # UNITS: W / (m-K)
+# CORE WALL TEMPERATURE OF EB WALL
+cns.tempsolidwall = 400
+
+# problem specific parameter
+prob.p0  					= 101325.0
+prob.T0  					= 300.0
+prob.xd  					= 6.27e-4
+prob.xsh 				= 0.01
+prob.deltaY 				= 0.5
+prob.deltaT 				= 2500
+prob.deltaP             	= 1.5e6
+prob.overdrive_factor 		= 1.0
+prob.time1 					= 0.0
+prob.time2 					= 0.0
+prob.t_inflow 				= 1.6e-6
+prob.Mobj  					= 0.0
+
+prob.xreflo   			= 0.012
+prob.xrefhi   			= 0.0
+prob.yreflo   			= 0.00
+prob.yrefhi   			= 0.0
+prob.zreflo   			= 0.00
+prob.zrefhi   			= 0.0
+
+# Bounds for the blast tube
+prob.rCyl = 0.013
+prob.LCyl = 0.2 #0.75
+prob.yCenter = 0.005
+prob.zCenter = 0.01
+
+# Blast ball
+prob.sphere_radius = 0.0005
+
+prob.Y1					= 1.0
+prob.radhitemp			= 0.0025
+prob.refuptolev         = 2
+
+# REACTION PARAMETERS
+cns.do_react  				= true
+
+# Stoichiometric Hydrogen-air reaction parameters
+# equivalence ratio 							= 1.0
+# experimental detonation cell size 					= 1..5 cm (Guirao et al.)
+# laminar  flame thickness xft 						= 0.033 cm
+# half reaction distance xd 						= 6.27e-4 m
+# heat release length Lhr 						= 1.96e-4 m
+# Detonation CJ speed 							= 1969 m/s
+# Domain dimensions, base level computational cells = 
+# Computational cell size of base level dx_L0	= 3.9e-4 m (256 cells, 0.1 m height)
+# Computational cell size of finest level dx_L3	= 4.8e-4 m (Lhr/6)
+# DEFINING THE REACTION PARAMETERS
+cns.eos_gamma 			= 1.125
+cns.eos_mu    			= 0.02277 		# UNITS: kg/mol
+cns.q_nd      			= 62.97		
+cns.Ea_nd     			= 39.98
+cns.pre_exp   			= 1.01e12			# UNITS: cm^3 / (g-s)
+cns.Tref      			= 300.0
+cns.pref      			= 101325.0
+cns.kappa_0			= 2e-5		# UNITS: g / (s-cm-K^(0.7))
+
+prob.write_to_file      	= 1
+prob.append_file        	= 1
+prob.data_file 			= Outputs/ethair_data.txt
+
+# DETAILS FOR WRITING FLAME AND SHOCK LOCATION IN PARTICULAR ZONES
+prob.write_to_file_zones      		= 1
+prob.append_file_zones        		= 1
+prob.data_file_zonebase 	  	= Outputs/ethair_data_zone
+
+prob.nzones 			= 1
+prob.yloz			= 0.038 
+prob.yhiz			= 0.062
