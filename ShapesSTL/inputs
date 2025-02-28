@@ -103,13 +103,16 @@ hollow_pipe.length = 0.2 #0.75
 hollow_pipe.Center = 0.05 0.05 0.1 #0.375 0.05 0.1
 hollow_pipe.axis_dir = 0
 
+# EB Configuration
 eb2.geom_type = user_defined
+eb2.stl_file = Shapes.stl
+eb2.use_bvh = true          # Use the bounding volume hierarchy for acceleration
+eb2.stl_scale = 1.0         # Scale the STL geometry
+eb2.stl_center = 0.1 0.01 0.01  # Center point for transformations
+eb2.stl_translation = 0.0 0.0 0.0  # Translation after scaling
+eb2.stl_reverse_normal = false  # Whether to flip normal vectors
 eb2.cover_multiple_cuts = 1
-eb2.use_bvh = false
-eb2.n_cell = 64
-eb2.max_grid_size = 16
-eb2.which_geom = 0
-eb2.num_coarsen_opt = 0
+eb2.num_coarsen_opt = 1
 
 # FULLY REFINE THE NARROWEST CHANNELS UPTO HIGHEST AMR LEVEL
 cns.refine_box_lo_0 = 0.0   0.037	0.087

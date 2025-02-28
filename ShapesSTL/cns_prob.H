@@ -21,7 +21,7 @@
 #include <algorithm>
 
 // Our include
-#include "../../EBGeometry/EBGeometry.hpp"
+#include "../EBGeometry/EBGeometry.hpp"
 
 #define PI 3.141592653589793238
 #define PREATM 101325
@@ -495,139 +495,67 @@ cns_probspecific_func (amrex::MultiFab& State,
 }
 
 /*!
-  @brief This is an AMReX-capable version of the EBGeometry BVH accelerator. It
-  is templated as T, Meta BV, K which indicate the EBGeometry precision, triangle meta-data, 
-  bounding volume, and tree degree.
+  @brief This is an AMReX-capable version of the EBGeometry BVH accelerator.
+  @tparam T The floating-point precision (float or double)
+  @tparam Meta The metadata type for triangles
+  @tparam BV The bounding volume type
+  @tparam K The tree degree (4 for quadtree, 8 for octree)
 */
 template <class T, class Meta, class BV, size_t K>
 class AMReXSDF
 {
 public:
   /*!
-    @brief Full constructor.
-    @param[in] a_filename File name. Must be an STL file.
+    @brief Full constructor
+    @param[in] a_filename STL file to load
+    @param[in] a_use_bvh Whether to use BVH acceleration
   */
-  AMReXSDF(const std::string a_filename, const bool a_use_bvh)
+  AMReXSDF(const std::string& a_filename, const bool a_use_bvh)
   {
     if (a_use_bvh) {
+      // Read into a BVH-accelerated implicit function
       m_sdf = EBGeometry::Parser::readIntoLinearBVH<T, Meta, BV, K>(a_filename);
     }
     else {
+      // Read into a non-accelerated mesh
       m_sdf = EBGeometry::Parser::readIntoMesh<T, Meta>(a_filename);
     }
   }
 
   /*!
-    @brief Copy constructor.
-    @param[in] a_other Other SDF.
+    @brief AMReX's implicit function interface - 3D coordinate version
   */
-  AMReXSDF(const AMReXSDF& a_other)
+  Real operator()(AMREX_D_DECL(Real x, Real y, Real z)) const noexcept
   {
-    this->m_sdf = a_other.m_sdf;
+    return m_sdf->value(EBGeometry::Vec3T<T>(AMREX_D_DECL(x, y, z)));
+  }
+  
+  // Add a getter method to access the protected member
+  std::shared_ptr<EBGeometry::ImplicitFunction<T>> getSdf() const {
+    return m_sdf;
   }
 
   /*!
-    @brief AMReX's implicit function definition.
+    @brief AMReX's implicit function interface - RealArray version
   */
-  Real
-  operator()(AMREX_D_DECL(Real x, Real y, Real z)) const noexcept
-  {
-    using Vec3 = EBGeometry::Vec3T<T>;
-
-    return m_sdf->value(Vec3(x, y, z));
-  };
-   
-  /*!
-    @brief Also an AMReX implicit function implementation
-  */
-  inline Real
-  operator()(const RealArray& p) const noexcept
+  inline Real operator()(const RealArray& p) const noexcept
   {
     return this->operator()(AMREX_D_DECL(p[0], p[1], p[2]));
   }
 
 protected:
   /*!
-    @brief Root node of the linearized BVH hierarchy.
+    @brief The EBGeometry SDF (signed distance function)
   */
   std::shared_ptr<EBGeometry::ImplicitFunction<T>> m_sdf;
-};  
+};
+
 
 AMREX_GPU_HOST
 AMREX_FORCE_INLINE
 void
 init_eb_geometry(const amrex::Geometry& geom, const int max_coarsening_level)
 {
-    const Real* prob_lo = geom.ProbLo();
-    const Real* prob_hi = geom.ProbHi();
-    const Real* dx      = geom.CellSize();
-    
-    // Default parameters
-    bool use_bvh         = true;
-    int num_coarsen_opt  = 1;
-    std::string filename = "Shapes.stl";
-    
-    // Read parameters from input file
-    ParmParse eb_pp("eb2");
-    eb_pp.query("use_bvh", use_bvh);
-    eb_pp.query("num_coarsen_opt", num_coarsen_opt);
-    eb_pp.query("stl_file", filename);
-    
-    Print() << "Initializing EB Geometry: " << filename << std::endl;
-    Print() << "Using BVH: " << (use_bvh ? "yes" : "no") << std::endl;
-    
-    // Apply any transformations needed for the geometry
-    RealArray translation{0.0, 0.0, 0.0};
-    Real scale = 1.0;
-    RealArray center{0.0, 0.0, 0.0};
-    bool reverse_normals = false;
-    
-    eb_pp.queryarr("stl_translation", translation, 0, AMREX_SPACEDIM);
-    eb_pp.query("stl_scale", scale);
-    eb_pp.queryarr("stl_center", center, 0, AMREX_SPACEDIM);
-    eb_pp.query("stl_reverse_normal", reverse_normals);
-    
-    Print() << "STL Parameters:" << std::endl;
-    Print() << "  Scale: " << scale << std::endl;
-    Print() << "  Center: (" << center[0] << ", " << center[1] << ", " << center[2] << ")" << std::endl;
-    Print() << "  Translation: (" << translation[0] << ", " << translation[1] << ", " << translation[2] << ")" << std::endl;
-    Print() << "  Reverse Normals: " << (reverse_normals ? "yes" : "no") << std::endl;
-    
-    try {
-        // Create our signed distance function
-        constexpr int K = 4;  // Tree degree (quad-tree)
-        using T    = float;   // Precision for EBGeometry
-        using Meta = EBGeometry::DCEL::DefaultMetaData;
-        using Vec3 = EBGeometry::Vec3T<T>;
-        using BV   = EBGeometry::BoundingVolumes::AABBT<T>;
-        
-        // Create the SDF with appropriate parameters
-        AMReXSDF<T, Meta, BV, K> sdf(filename, use_bvh);
-        
-        // Create a transform function to apply scale and translation
-        auto transform = [scale, translation, center, reverse_normals](auto pt) {
-            // First center the point
-            RealArray transformed_pt;
-            for (int i = 0; i < AMREX_SPACEDIM; i++) {
-                transformed_pt[i] = (pt[i] - center[i]) * scale + center[i] + translation[i];
-            }
-            
-            // Create the shop with or without the transformation
-            return transformed_pt;
-        };
-        
-        // Wrap the SDF in a transform if needed
-        auto gshop = (scale != 1.0 || translation[0] != 0 || translation[1] != 0 || translation[2] != 0)
-            ? EB2::makeShop(sdf, transform)
-            : EB2::makeShop(sdf);
-            
-        // Build the EB2 geometry
-        EB2::Build(gshop, geom, max_coarsening_level, max_coarsening_level, 4, true, true, num_coarsen_opt);
-        
-        Print() << "EB Geometry initialization successful!" << std::endl;
-    }
-    catch (const std::exception& ex) {
-        Abort("Error initializing EB geometry: " + std::string(ex.what()));
-    }
+ 
 }
 #endif

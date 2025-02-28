@@ -4,13 +4,14 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Amr.H>
 #include <AMReX_EB2.H>
-
+#include "../EBGeometry/EBGeometry.hpp"
 #include <CNS.H>
 
 using namespace amrex;
 
 amrex::LevelBld* getLevelBld ();
 void initialize_EB2 (const Geometry& geom, const int required_level, const int max_level);
+
 
 int main (int argc, char* argv[])
 {
